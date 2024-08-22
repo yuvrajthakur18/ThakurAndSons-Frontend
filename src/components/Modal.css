@@ -71,3 +71,13 @@
     cursor: pointer;
     color: #000;
   }
+
+  /* Modal.css */
+.form-group select {
+  width: 100%; /* Full width */
+  padding: 8px; /* Padding of 5px */
+  margin-bottom: 15px;
+  border-radius: 5px; /* Border radius of 3px */
+  border: 1px solid #ccc; /* Optional: Add a border */
+  box-sizing: border-box; /* Ensure padding doesn't affect the width */
+}

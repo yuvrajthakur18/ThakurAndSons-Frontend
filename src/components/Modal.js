@@ -19,8 +19,12 @@ export const Modal = ({ showModal, setShowModal, userId }) => {
     });
   };
 
+  // Get the current date in YYYY-MM-DD format
+  const today = new Date().toISOString().split('T')[0];
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    // alert("Enter "+localStorage.getItem('userId'))
     try {
     //   const { userId, ...eventDataWithoutUserId } = eventData;
       const response = await fetch(`http://localhost:8080/api/events/${localStorage.getItem('userId')}`, {
@@ -53,10 +57,12 @@ export const Modal = ({ showModal, setShowModal, userId }) => {
 
   return (
     <div className={`modal ${showModal ? 'show' : 'hide'}`} onClick={() => setShowModal(false)}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <span className="close" onClick={() => setShowModal(false)}>×</span>
-        <h2 className="modal-title">Add New Event</h2>
-        <form onSubmit={handleSubmit}>
+      <div className="modal-content" style={{backgroundColor:'#e7f1f2'}} onClick={(e) => e.stopPropagation()}>
+        <div className='d-flex' style={{justifyContent:'space-between' ,alignItems:'center'}}>
+          <h2 className="modal-title1" style={{color:'#1F316F', fontSize:'30px'}}>Add New Event</h2>
+          <div className="closeMark" style={{fontSize:'25px', cursor:'pointer', color:'#1F316F'}} onClick={() => setShowModal(false)}><i class="bi bi-x-circle"></i></div>
+        </div>
+        <form onSubmit={handleSubmit} style={{color:'#1F316F'}}>
           <div className="form-group">
             <label htmlFor="name">Event Name:</label>
             <input
@@ -90,6 +96,7 @@ export const Modal = ({ showModal, setShowModal, userId }) => {
               value={eventData.date}
               onChange={handleChange}
               required
+              min={today} // Disable dates before today
             />
           </div>
           <div className="form-group">
@@ -106,19 +113,25 @@ export const Modal = ({ showModal, setShowModal, userId }) => {
           </div>
           <div className="form-group">
             <label htmlFor="category">Category:</label>
-            <input
-              type="text"
+            <select
               id="category"
               name="category"
-              placeholder="Event Category"
               value={eventData.category}
               onChange={handleChange}
               required
-            />
+            >
+              <option value="" disabled>Select Category</option>
+              <option value="alumini">Alumini Meets</option>
+              <option value="concert">Concert</option>
+              <option value="tech">Tech Seminar</option>
+              <option value="get_together">Small Get Together</option>
+              <option value="wedding">Wedding</option>
+              <option value="other">Other</option>
+            </select>
           </div>
           <div className="modal-buttons">
-            <button type="submit">Save Changes</button>
-            <button type="button" className="close-button" onClick={() => setShowModal(false)}>Close</button>
+            <button type="submit" className="" style={{backgroundColor:'#1F316F'}}>Create Event</button>
+            <button type="button" className="close-button" style={{backgroundColor:'#1F316F'}} onClick={() => setShowModal(false)}>Close</button>
           </div>
         </form>
       </div>

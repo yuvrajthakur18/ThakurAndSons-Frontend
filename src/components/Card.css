@@ -19,8 +19,8 @@ body {
     transition: all 500ms cubic-bezier(0.19, 1, 0.22, 1);
     overflow: hidden;
     border-radius: 20px;
-    min-height: 450px;
-    box-shadow: 0 0 12px 0 rgba(0, 0, 0, 0.2);
+    min-height: 550px;
+    /* box-shadow: 0 0 12px 0 rgba(0, 0, 0, 0.2); */
   
     @media (max-width: 768px) {
       min-height: 350px;
@@ -51,19 +51,19 @@ body {
       }
   
       &:hover {
-        transform: scale(0.98);
+        transform: scale(1.02);
         box-shadow: 0 0 5px -2px rgba(0, 0, 0, 0.3);
         background-size: 130%;
         transition: all 500ms cubic-bezier(0.19, 1, 0.22, 1);
   
         .card-img-overlay {
           transition: all 800ms cubic-bezier(0.19, 1, 0.22, 1);
-          background: rgb(23, 162, 184); /* Light blue color */
-          background: linear-gradient(
+          background: #cfd9e3;
+          /* background: linear-gradient(
             0deg,
             rgba(23, 162, 184, 0.5) 0%,
             rgba(23, 162, 184, 1) 100%
-          );
+          ); */
         }
       }
     }
@@ -90,26 +90,28 @@ body {
     }
   
     .card-body {
-      transition: all 500ms cubic-bezier(0.19, 1, 0.22, 1);
+      /* transition: all 500ms cubic-bezier(0.19, 1, 0.22, 1); */
     }
   
-    &:hover {
+    /* &:hover {
       .card-body {
         margin-top: 30px;
         transition: all 800ms cubic-bezier(0.19, 1, 0.22, 1);
       }
       cursor: pointer;
       transition: all 800ms cubic-bezier(0.19, 1, 0.22, 1);
-    }
+    } */
   
     .card-img-overlay {
       transition: all 800ms cubic-bezier(0.19, 1, 0.22, 1);
-      background: rgb(23, 162, 184); /* Light blue color */
-      background: linear-gradient(
+      background: #EAD6CB; 
+      
+      /* background: linear-gradient(
         0deg,
         rgba(23, 162, 184, 0.3785889355742297) 0%,
         rgba(23, 162, 184, 1) 100%
-      );
+      ); */
+      /* background: #e7f1f2; */
     }
   }
   

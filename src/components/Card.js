@@ -1,15 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import './Card.css';
 import { Modal } from './Modal';
-import { events as dummyEvents } from '../events';
+import 'bootstrap-icons/font/bootstrap-icons.css';
 
 export const Card = () => {
   const [username, setUsername] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [myCreatedEvents, setMyCreatedEvents] = useState([]);
+  const [myRegisteredEvents, setMyRegisteredEvents] = useState([]);
   const [allEvents, setAllEvents] = useState([]);
   const [user, setUser] = useState({ username: '', email: '', userId: '' });
   const [isHomepage, setIsHomepage] = useState(false);
+  const [editingEventId, setEditingEventId] = useState(null);
+  const [editEventData, setEditEventData] = useState({
+    name: '',
+    description: '',
+    date: '',
+    location: '',
+    category: ''
+  });
 
   useEffect(() => {
     const storedUsername = localStorage.getItem('username');
@@ -23,12 +32,14 @@ export const Card = () => {
     setIsHomepage(window.location.pathname === '/');
   }, []);
 
+  const userId = localStorage.getItem('userId')
   useEffect(() => {
-    if (user.id) {
-      fetchUserEvents(user.id);
-      localStorage.setItem('userId', user.id);
+    if (userId) {
+      fetchUserEvents(userId);
+      fetchUserRegisteredEvents(userId);
     }
-  }, [user.id]);
+  }, [userId]);
+  
 
   const fetchUserInfo = async (username) => {
     try {
@@ -58,12 +69,26 @@ export const Card = () => {
     }
   };
 
-  const fetchUserEvents = async (userId) => {
+  const fetchUserEvents = async () => {
     try {
-      const response = await fetch(`http://localhost:8080/api/events/user/${userId}`);
+      const response = await fetch(`http://localhost:8080/api/events/user/${localStorage.getItem('userId')}`);
       if (response.ok) {
         const createdEvents = await response.json();
         setMyCreatedEvents(createdEvents);
+      } else {
+        console.error('Failed to fetch events');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
+  const fetchUserRegisteredEvents = async () => {
+    try {
+      const response = await fetch(`http://localhost:8080/api/events/user/${localStorage.getItem('userId')}/registered-events`);
+      if (response.ok) {
+        const registeredEvents = await response.json();
+        setMyRegisteredEvents(registeredEvents);
       } else {
         console.error('Failed to fetch events');
       }
@@ -76,19 +101,105 @@ export const Card = () => {
     setShowModal(true);
   };
 
+  const handleEditEventClick = (event) => {
+    setEditingEventId(event.id);
+    localStorage.setItem('eventId', event.id);
+    setEditEventData({
+      name: event.name,
+      description: event.description,
+      date: event.date,
+      location: event.location,
+      category: event.category
+    });
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setEditEventData({
+      ...editEventData,
+      [name]: value
+    });
+  };
+
+  const handleSaveChanges = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await fetch(`http://localhost:8080/api/events/${editingEventId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(editEventData)
+      });
+      if (response.ok) {
+        const updatedEvent = await response.json();
+        setMyCreatedEvents((prevEvents) =>
+          prevEvents.map((event) => (event.id === editingEventId ? updatedEvent : event))
+        );
+        setEditingEventId(null);
+      } else {
+        console.error('Failed to update event');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
+  const handleCancelEdit = (eventId) => {
+    setEditingEventId(null);
+    setEditEventData({
+      name: '',
+      description: '',
+      date: '',
+      location: '',
+      category: ''
+    });
+  };  
+
+  const handleDelete = (eventId) => {
+    // Send a DELETE request to the backend
+    fetch(`http://localhost:8080/api/events/${eventId}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+    .then(response => {
+      if (response.ok) {
+        // Remove the deleted event from the state
+        setMyCreatedEvents(prevEvents => prevEvents.filter(event => event.id !== eventId));
+      } else {
+        console.error('Failed to delete the event.');
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+    });
+  };
+  
+
+  const categoryImages = {
+    anniversary: "/anniversary.jpg",
+    concert: "/concert.jpg",
+    tech: "/tech.jpg",
+    get_together: "/get_together.jpg",
+    wedding: "/weddings.jpg",
+    other: "/other.jpg",
+  };
+
   const handleRegister = async (eventId) => {
     const userId = localStorage.getItem('userId'); // Retrieve user ID
   
     try {
-      const response = await fetch('http://localhost:8080/api/events/register', {
+      const response = await fetch(`http://localhost:8080/api/events/register/${userId}/${localStorage.getItem('eventId')}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          userId,
-          eventId
-        }),
+        // body: JSON.stringify({
+        //   userId,
+        //   eventId
+        // }),
       });
 
       if (!response.ok) {
@@ -101,37 +212,33 @@ export const Card = () => {
       alert('Failed to register for the event.');
     }
   };
-
   
 
   return (
+  <div style={{backgroundColor:'white', padding:'10px 0', marginTop:'-30px'}}>
     <section className="wrapper">
       <div className="container">
         {/* User Info Header */}
-        <div className="text-center mb-4">
-          <h3 style={{ fontWeight: 'bold', fontSize: '1.5rem', color: '#ff0000', textTransform: 'uppercase' }}>
-            {username || 'Home Page 🏠'}
-          </h3>
+        <div>
+          <h2 className='bona-nova-sc-regular' style={{fontSize:'45px', letterSpacing:'4px'}}>
+            {" "|| 'OUR EVENTS'}
+          </h2>
         </div>
 
         <div className="row">
-          {/* Conditionally render Add New Event Button */}
-          {!isHomepage && (
-            <div className="col-12 mb-4">
-              <button
-                className="btn btn-primary"
-                style={{ backgroundColor: '#50a7c2', color: '#ffffff' }}
-                onClick={handleAddEventClick}
-              >
-                Add New Event
-              </button>
-            </div>
-          )}
-
           {/* Conditionally render My Events Section */}
           {!isHomepage && (
             <div className="my-events-section">
-              <h2 style={{fontSize: '1.3rem', color: '#ff0000', textTransform: 'uppercase'}}>{username}'s Events</h2>
+              <div className='d-flex justify-content-between' style={{ alignItems: 'center' }}>
+                <h2 className='bona-nova-sc-regular' style={{ fontSize: '35px', letterSpacing: '3px', color: 'gray', font: 'lighter', textTransform: 'uppercase' }}>{username}'s Events</h2>
+                <button
+                  className="btn btn-outline"
+                  style={{ backgroundColor: 'transparent', color: '#1F316F' }}
+                  onClick={handleAddEventClick}
+                >
+                  <i className="bi bi-plus-circle-dotted" style={{ fontSize: '50px' }}></i>
+                </button>
+              </div>
               <div className="row">
                 {myCreatedEvents.length === 0 ? (
                   <div className="col-12">
@@ -139,32 +246,253 @@ export const Card = () => {
                   </div>
                 ) : (
                   myCreatedEvents.map((event, index) => (
-                    <div key={index} className="col-sm-12 col-md-6 col-lg-4 mb-4 p-2">
+                    <div key={index} className="col-sm-12 col-md-6 col-lg-6 mb-4 p-2">
                       <div
-                        className="card text-light card-has-bg click-col"
+                        className="card text-dark card-has-bg click-col"
                         style={{ backgroundImage: "url('https://source.unsplash.com/600x900/?" + event.category + ",street')" }}
                       >
-                        <img
-                          className="card-img d-none"
-                          src={"https://source.unsplash.com/600x900/?" + event.category + ",street"}
-                          alt={event.name}
-                        />
-                        <div className="card-img-overlay d-flex flex-column">
+                        <div className="card-img-overlay d-flex flex-column pt-0">
                           <div className="card-body">
-                            <small className="card-meta mb-2">{event.category}</small>
-                            <h4 className="card-title mt-0">
-                              <a className="text-light" href="#!">{event.name}</a>
-                            </h4>
-                            <small><i className="far fa-clock"></i> {event.date}</small>
-                            <p className="mt-3">{event.description}</p>
-                          </div>
-                          <div className="card-footer">
-                            <div className="media">
-                              <div className="media-body">
-                                <h6 className="my-0 text-light d-block" style={{ textTransform: 'uppercase' }}>{username}</h6>
+                            {editingEventId === event.id ? (
+                              <form onSubmit={handleSaveChanges}>
+                                <div className="form-group">
+                                  <label htmlFor="name">Event Name:</label>
+                                  <input
+                                    type="text"
+                                    id="name"
+                                    name="name"
+                                    value={editEventData.name}
+                                    onChange={handleChange}
+                                    required
+                                    className="form-control"
+                                  />
+                                </div>
+                                <div className="form-group">
+                                  <label htmlFor="description">Description:</label>
+                                  <textarea
+                                    id="description"
+                                    name="description"
+                                    value={editEventData.description}
+                                    onChange={handleChange}
+                                    required
+                                    className="form-control"
+                                  ></textarea>
+                                </div>
+                                <div className="form-group">
+                                  <label htmlFor="date">Date:</label>
+                                  <input
+                                    type="date"
+                                    id="date"
+                                    name="date"
+                                    value={editEventData.date}
+                                    onChange={handleChange}
+                                    required
+                                    min={new Date().toISOString().split('T')[0]}
+                                    className="form-control"
+                                  />
+                                </div>
+                                <div className="form-group">
+                                  <label htmlFor="location">Location:</label>
+                                  <input
+                                    type="text"
+                                    id="location"
+                                    name="location"
+                                    value={editEventData.location}
+                                    onChange={handleChange}
+                                    required
+                                    className="form-control"
+                                  />
+                                </div>
+                                <div className="form-group">
+                                  <label htmlFor="category">Category:</label>
+                                  <select
+                                    id="category"
+                                    name="category"
+                                    value={editEventData.category}
+                                    onChange={handleChange}
+                                    required
+                                    className="form-control"
+                                  >
+                                    <option value="" disabled>Select Category</option>
+                                    <option value="anniversary">B'Day/Anniversary</option>
+                                    <option value="concert">Concert</option>
+                                    <option value="tech">Tech Seminar</option>
+                                    <option value="get_together">Small Get Together</option>
+                                    <option value="wedding">Wedding</option>
+                                    <option value="other">Other</option>
+                                  </select>
+                                </div>
+                                <div className="d-flex justify-content-between">
+                                  <button type="submit" className="btn btn-success">Save Changes</button>
+                                  <button type="button" className="btn btn-secondary" onClick={() => handleCancelEdit(event.id)}>Cancel</button>
+                                </div>
+                              </form>
+                            ) : (
+                              <div className=''>
+                                <div style={{ paddingLeft: '3px', fontSize: '20px' }}>
+                                  <h3 className="card-meta">{event.category}</h3>
+                                </div>
+                                <div className='d-flex justify-content-center'>
+                                  <img
+                                    src={categoryImages[event.category] || "/default.jpg"} // Use default image if category is not found
+                                    alt='EventImage'
+                                    width="575px"
+                                    height="300px"
+                                    style={{borderRadius:"10px", boxShadow:"1px 1px 6px grey"}}
+                                  />
+                                </div>
+                                <div style={{ paddingTop: '10px', paddingLeft: '3px', fontSize: '20px' }}>
+                                  <h3 style={{ fontSize: '18px', color: 'black', letterSpacing: '5px', fontWeight: 'light', paddingLeft: '3px' }} className='bona-nova-sc-bold'>{event.name}</h3>
+                                </div>
+                                <div style={{ paddingLeft: '7px' }}>
+                                  <small><i className="far fa-clock"></i> {event.date}</small>
+                                  <p className="mt-1" style={{ fontStyle: 'italic' }}>{event.description}</p>
+                                </div>
                               </div>
-                            </div>
-                            <button className="btn btn-secondary mt-2" style={{ backgroundColor: '#30e5ca', color: '#ffffff' }}>Registered</button>
+                            )}
+                          </div>
+                          <div className="card-footer d-flex justify-content-around" style={{ paddingTop: '0px' }}>
+                            {/* Register for event button */}
+                            <button onClick={() => handleRegister(event.id)} className="btn btn-secondary" style={{ backgroundColor: 'transparent', color: 'black' }}>Register for Event</button>
+                            {/* Edit Event button  */}
+                            <button className="btn btn-secondary" onClick={() => handleEditEventClick(event)} style={{ backgroundColor: 'transparent', color: 'green', width: '12%' }}>
+                              <i className="bi bi-pencil-square"></i>
+                            </button>
+                            {/* Delete Event button  */}
+                            <button className="btn btn-secondary" onClick={() => handleDelete(event.id)} style={{ backgroundColor: 'transparent', color: 'red', width: '15%' }}>
+                              <i className="bi bi-trash"></i>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Conditionally render My Registered Events Section */}
+          {!isHomepage && (
+            <div className="my-events-section">
+              <div className='d-flex justify-content-between' style={{ alignItems: 'center' }}>
+                <h2 className='bona-nova-sc-regular' style={{ fontSize: '35px', letterSpacing: '3px', color: 'gray', font: 'lighter', textTransform: 'uppercase' }}>{username}'s Registered Events</h2>
+              </div>
+              <div className="row">
+                {myRegisteredEvents.length === 0 ? (
+                  <div className="col-12">
+                    <p>No Events to show</p>
+                  </div>
+                ) : (
+                  myRegisteredEvents.map((event, index) => (
+                    <div key={index} className="col-sm-12 col-md-6 col-lg-6 mb-4 p-2">
+                      <div
+                        className="card text-dark card-has-bg click-col"
+                        style={{ backgroundImage: "url('https://source.unsplash.com/600x900/?" + event.category + ",street')" }}
+                      >
+                        <div className="card-img-overlay d-flex flex-column pt-0">
+                          <div className="card-body">
+                            {editingEventId === event.id ? (
+                              <form onSubmit={handleSaveChanges}>
+                                <div className="form-group">
+                                  <label htmlFor="name">Event Name:</label>
+                                  <input
+                                    type="text"
+                                    id="name"
+                                    name="name"
+                                    value={editEventData.name}
+                                    onChange={handleChange}
+                                    required
+                                    className="form-control"
+                                  />
+                                </div>
+                                <div className="form-group">
+                                  <label htmlFor="description">Description:</label>
+                                  <textarea
+                                    id="description"
+                                    name="description"
+                                    value={editEventData.description}
+                                    onChange={handleChange}
+                                    required
+                                    className="form-control"
+                                  ></textarea>
+                                </div>
+                                <div className="form-group">
+                                  <label htmlFor="date">Date:</label>
+                                  <input
+                                    type="date"
+                                    id="date"
+                                    name="date"
+                                    value={editEventData.date}
+                                    onChange={handleChange}
+                                    required
+                                    min={new Date().toISOString().split('T')[0]}
+                                    className="form-control"
+                                  />
+                                </div>
+                                <div className="form-group">
+                                  <label htmlFor="location">Location:</label>
+                                  <input
+                                    type="text"
+                                    id="location"
+                                    name="location"
+                                    value={editEventData.location}
+                                    onChange={handleChange}
+                                    required
+                                    className="form-control"
+                                  />
+                                </div>
+                                <div className="form-group">
+                                  <label htmlFor="category">Category:</label>
+                                  <select
+                                    id="category"
+                                    name="category"
+                                    value={editEventData.category}
+                                    onChange={handleChange}
+                                    required
+                                    className="form-control"
+                                  >
+                                    <option value="" disabled>Select Category</option>
+                                    <option value="anniversary">B'Day/Anniversary</option>
+                                    <option value="concert">Concert</option>
+                                    <option value="tech">Tech Seminar</option>
+                                    <option value="get_together">Small Get Together</option>
+                                    <option value="wedding">Wedding</option>
+                                    <option value="other">Other</option>
+                                  </select>
+                                </div>
+                                <div className="d-flex justify-content-between">
+                                  <button type="submit" className="btn btn-success">Save Changes</button>
+                                  <button type="button" className="btn btn-secondary" onClick={() => handleCancelEdit(event.id)}>Cancel</button>
+                                </div>
+                              </form>
+                            ) : (
+                              <div className=''>
+                                <div style={{ paddingLeft: '3px', fontSize: '20px' }}>
+                                  <h3 className="card-meta">{event.category}</h3>
+                                </div>
+                                <div className='d-flex justify-content-center'>
+                                  <img
+                                    src={categoryImages[event.category] || "/default.jpg"} // Use default image if category is not found
+                                    alt='EventImage'
+                                    width="575px"
+                                    height="300px"
+                                    style={{borderRadius:"10px", boxShadow:"1px 1px 6px grey"}}
+                                  />
+                                </div>
+                                <div style={{ paddingTop: '10px', paddingLeft: '3px', fontSize: '20px' }}>
+                                  <h3 style={{ fontSize: '18px', color: 'black', letterSpacing: '5px', fontWeight: 'light', paddingLeft: '3px' }} className='bona-nova-sc-bold'>{event.name}</h3>
+                                </div>
+                                <div style={{ paddingLeft: '7px' }}>
+                                  <small><i className="far fa-clock"></i> {event.date}</small>
+                                  <p className="mt-1" style={{ fontStyle: 'italic' }}>{event.description}</p>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                          <div className="card-footer d-flex justify-content-around" style={{ paddingTop: '0px' }}>
+                            {/* Registered for event button */}
+                            <button className="btn btn-secondary" style={{ backgroundColor: 'transparent', color: 'black' }}>Registered</button>
                           </div>
                         </div>
                       </div>
@@ -177,7 +505,7 @@ export const Card = () => {
 
           {/* All Events Section */}
           <div className="my-events-section">
-            <h2>All Events</h2>
+          <h2 className='bona-nova-sc-regular' style={{fontSize:'35px', letterSpacing:'3px', color:'gray', font:'lighter', textTransform: 'uppercase', paddingTop:'100px'}}>All Events</h2>
             <div className="row">
               {allEvents.length === 0 ? (
                 <div className="col-12">
@@ -185,32 +513,41 @@ export const Card = () => {
                 </div>
               ) : (
                 allEvents.map((event, index) => (
-                  <div key={index} className="col-sm-12 col-md-6 col-lg-4 mb-4 p-2">
+                  <div key={index} className="col-sm-12 col-md-6 col-lg-6 mb-4 p-2">
                     <div
-                      className="card text-light card-has-bg click-col"
-                      style={{ backgroundImage: "url('https://source.unsplash.com/600x900/?" + event.category + ",street')" }}
+                      className="card text-dark card-has-bg click-col"
+                      style={{ backgroundImage: "url('https://source.unsplash.com/600x900/?" + event.category + ",street')"}}
                     >
-                      <img
-                        className="card-img d-none"
-                        src={"https://source.unsplash.com/600x900/?" + event.category + ",street"}
-                        alt={event.name}
-                      />
-                      <div className="card-img-overlay d-flex flex-column">
+                      <div className="card-img-overlay d-flex flex-column pt-0">
                         <div className="card-body">
-                          <small className="card-meta mb-2">{event.category}</small>
-                          <h4 className="card-title mt-0">
-                            <a className="text-light" href="#!">{event.name}</a>
-                          </h4>
-                          <small><i className="far fa-clock"></i> {event.date}</small>
-                          <p className="mt-3">{event.description}</p>
-                        </div>
-                        <div className="card-footer">
-                          <div className="media">
-                            <div className="media-body">
-                              <h6 className="my-0 text-light d-block">Event</h6>
+                          <div className=''>
+                            <div style={{paddingLeft:'3px', fontSize:'20px'}}>
+                              <h3 className="card-meta">{event.category}</h3>
+                            </div>
+                            <div className='d-flex justify-content-center' >
+                              <img
+                                src={categoryImages[event.category] || "/default.jpg"} // Use default image if category is not found
+                                alt='EventImage'
+                                width="575px"
+                                height="300px"
+                                style={{borderRadius:"10px", boxShadow:"1px 1px 6px grey"}}
+                              />
+                            </div>
+                            <div style={{paddingTop:'10px' ,paddingLeft:'3px', fontSize:'20px' }}>
+                              <h3 style={{fontSize: '18px', color:'black', letterSpacing:'5px', fontWeight:'light', paddingLeft:'3px'}} className='bona-nova-sc-bold'>{event.name}</h3>
+                            </div>
+                            <div style={{paddingLeft:'7px'}}>
+                              <small><i className="far fa-clock"></i> {event.date}</small>
+                              <p className="mt-1" style={{fontStyle:'italic'}}>{event.description}</p>
                             </div>
                           </div>
-                          <button onClick={() => handleRegister(event.id)} className="btn btn-secondary mt-2" style={{ backgroundColor: '#84ceda', color: '#ffffff' }}>Register for Event</button>
+                        </div>
+                        <div className="card-footer d-flex justify-content-around" style={{paddingTop:'0px'}}>
+                          {/* Register for event button */}
+                          <button onClick={() => handleRegister(event.id)} className="btn btn-secondary " style={{ backgroundColor: 'transparent', color: 'green' }}>Register for Event</button>
+
+                          {/*Show Event Button*/}
+
                         </div>
                       </div>
                     </div>
@@ -219,49 +556,10 @@ export const Card = () => {
               )}
             </div>
           </div>
-
-          {/* Existing Dummy Events Section */}
-          <div className="my-events-section">
-            <h2>Dummy Events</h2>
-            <div className="row">
-              {dummyEvents.map((event, index) => (
-                <div key={index} className="col-sm-12 col-md-6 col-lg-4 mb-4 p-2">
-                  <div
-                    className="card text-light card-has-bg click-col"
-                    style={{ backgroundImage: "url('https://source.unsplash.com/600x900/?" + event.category + ",street')" }}
-                  >
-                    <img
-                      className="card-img d-none"
-                      src={"https://source.unsplash.com/600x900/?" + event.category + ",street"}
-                      alt={event.name}
-                    />
-                    <div className="card-img-overlay d-flex flex-column">
-                      <div className="card-body">
-                        <small className="card-meta mb-2">{event.category}</small>
-                        <h4 className="card-title mt-0">
-                          <a className="text-light" href="#!">{event.name}</a>
-                        </h4>
-                        <small><i className="far fa-clock"></i> {event.date}</small>
-                        <p className="mt-3">{event.description}</p>
-                      </div>
-                      <div className="card-footer">
-                        <div className="media">
-                          <div className="media-body">
-                            <h6 className="my-0 text-light d-block">Event</h6>
-                          </div>
-                        </div>
-                        <button className="btn btn-secondary mt-2" style={{ backgroundColor: '#84ceda', color: '#ffffff' }}>Register for Event</button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
       </div>
       <Modal showModal={showModal} setShowModal={setShowModal} userId={user.userId} />
-    </section>
+    </section></div>
   );
 };
 
@@ -269,15 +567,23 @@ export const Card = () => {
 // import React, { useState, useEffect } from 'react';
 // import './Card.css';
 // import { Modal } from './Modal';
-// import { events as dummyEvents } from '../events';
+// import 'bootstrap-icons/font/bootstrap-icons.css';
 
 // export const Card = () => {
 //   const [username, setUsername] = useState('');
 //   const [showModal, setShowModal] = useState(false);
 //   const [myCreatedEvents, setMyCreatedEvents] = useState([]);
-//   const [myRegisteredEvents, setMyRegisteredEvents] = useState([]);
 //   const [allEvents, setAllEvents] = useState([]);
 //   const [user, setUser] = useState({ username: '', email: '', userId: '' });
+//   const [isHomepage, setIsHomepage] = useState(false);
+//   const [editingEventId, setEditingEventId] = useState(null);
+//   const [editEventData, setEditEventData] = useState({
+//     name: '',
+//     description: '',
+//     date: '',
+//     location: '',
+//     category: ''
+//   });
 
 //   useEffect(() => {
 //     const storedUsername = localStorage.getItem('username');
@@ -286,12 +592,14 @@ export const Card = () => {
 //       fetchUserInfo(storedUsername);
 //     }
 //     fetchAllEvents();
+
+//     // Check if current URL is homepage
+//     setIsHomepage(window.location.pathname === '/');
 //   }, []);
 
 //   useEffect(() => {
 //     if (user.id) {
 //       fetchUserEvents(user.id);
-
 //       localStorage.setItem('userId', user.id);
 //     }
 //   }, [user.id]);
@@ -329,7 +637,6 @@ export const Card = () => {
 //       const response = await fetch(`http://localhost:8080/api/events/user/${userId}`);
 //       if (response.ok) {
 //         const createdEvents = await response.json();
-//         console.log('Hello ',createdEvents); // For debug purpose
 //         setMyCreatedEvents(createdEvents);
 //       } else {
 //         console.error('Failed to fetch events');
@@ -343,121 +650,259 @@ export const Card = () => {
 //     setShowModal(true);
 //   };
 
+//   const handleEditEventClick = (event) => {
+//     setEditingEventId(event.id);
+//     setEditEventData({
+//       name: event.name,
+//       description: event.description,
+//       date: event.date,
+//       location: event.location,
+//       category: event.category
+//     });
+//   };
+
+//   const handleChange = (e) => {
+//     const { name, value } = e.target;
+//     setEditEventData({
+//       ...editEventData,
+//       [name]: value
+//     });
+//   };
+
+//   const handleSaveChanges = async (e) => {
+//     e.preventDefault();
+//     try {
+//       const response = await fetch(`http://localhost:8080/api/events/${editingEventId}`, {
+//         method: 'PUT',
+//         headers: {
+//           'Content-Type': 'application/json'
+//         },
+//         body: JSON.stringify(editEventData)
+//       });
+//       if (response.ok) {
+//         const updatedEvent = await response.json();
+//         setMyCreatedEvents((prevEvents) =>
+//           prevEvents.map((event) => (event.id === editingEventId ? updatedEvent : event))
+//         );
+//         setEditingEventId(null);
+//       } else {
+//         console.error('Failed to update event');
+//       }
+//     } catch (error) {
+//       console.error('Error:', error);
+//     }
+//   };
+
+//   const handleCancelEdit = (eventId) => {
+//     setEditingEventId(null);
+//     setEditEventData({
+//       name: '',
+//       description: '',
+//       date: '',
+//       location: '',
+//       category: ''
+//     });
+//   };  
+
+//   const categoryImages = {
+//     alumini: "/alumini.jpg",
+//     concert: "/concert.jpg",
+//     tech: "/tech.jpg",
+//     get_together: "/get_together.jpg",
+//     wedding: "/weddings.jpg",
+//     other: "/other.jpg",
+//   };
+
+//   const handleRegister = async (eventId) => {
+//     const userId = localStorage.getItem('userId'); // Retrieve user ID
+  
+//     try {
+//       const response = await fetch('http://localhost:8080/api/events/register', {
+//         method: 'POST',
+//         headers: {
+//           'Content-Type': 'application/json',
+//         },
+//         body: JSON.stringify({
+//           userId,
+//           eventId
+//         }),
+//       });
+
+//       if (!response.ok) {
+//         throw new Error('Network response was not ok');
+//       }
+
+//       alert('Successfully registered for the event!');
+//     } catch (error) {
+//       console.error('Error registering for event:', error);
+//       alert('Failed to register for the event.');
+//     }
+//   };
+  
+
 //   return (
+//   <div style={{backgroundColor:'white', padding:'10px 0', marginTop:'-30px'}}>
 //     <section className="wrapper">
 //       <div className="container">
 //         {/* User Info Header */}
-//         <div className="text-center mb-4">
-//           <h3 style={{ fontWeight: 'bold', fontSize: '1.5rem', color: '#ff0000', textTransform: 'uppercase' }}>
-//             {username || 'Home Page 🏠'}
-//           </h3>
+//         <div>
+//           <h2 className='bona-nova-sc-regular' style={{fontSize:'45px', letterSpacing:'4px'}}>
+//             {" "|| 'OUR EVENTS'}
+//           </h2>
 //         </div>
 
 //         <div className="row">
-//           {/* Add New Event Button */}
-//           <div className="col-12 mb-4">
-//             <button
-//               className="btn btn-primary"
-//               style={{ backgroundColor: '#50a7c2', color: '#ffffff' }}
-//               onClick={handleAddEventClick}
+//           {/* Conditionally render My Events Section */}
+//           {!isHomepage && (
+//   <div className="my-events-section">
+//     <div className='d-flex justify-content-between' style={{ alignItems: 'center' }}>
+//       <h2 className='bona-nova-sc-regular' style={{ fontSize: '35px', letterSpacing: '3px', color: 'gray', font: 'lighter', textTransform: 'uppercase' }}>{username}'s Events</h2>
+//       <button
+//         className="btn btn-outline"
+//         style={{ backgroundColor: 'transparent', color: '#1F316F' }}
+//         onClick={handleAddEventClick}
+//       >
+//         <i className="bi bi-plus-circle-dotted" style={{ fontSize: '50px' }}></i>
+//       </button>
+//     </div>
+//     <div className="row">
+//       {myCreatedEvents.length === 0 ? (
+//         <div className="col-12">
+//           <p>No Events to show</p>
+//         </div>
+//       ) : (
+//         myCreatedEvents.map((event, index) => (
+//           <div key={index} className="col-sm-12 col-md-6 col-lg-6 mb-4 p-2">
+//             <div
+//               className="card text-dark card-has-bg click-col"
+//               style={{ backgroundImage: "url('https://source.unsplash.com/600x900/?" + event.category + ",street')" }}
 //             >
-//               Add New Event
-//             </button>
-//           </div>
-
-//           {/* My Created Events Section */}
-//           <div className="my-events-section">
-//             <h2>My Created Events</h2>
-//             <div className="row">
-//               {myCreatedEvents.length === 0 ? (
-//                 <div className="col-12">
-//                   <p>No Events to show</p>
-//                 </div>
-//               ) : (
-//                 myCreatedEvents.map((event, index) => (
-//                   <div key={index} className="col-sm-12 col-md-6 col-lg-4 mb-4 p-2">
-//                     <div
-//                       className="card text-light card-has-bg click-col"
-//                       style={{ backgroundImage: "url('https://source.unsplash.com/600x900/?" + event.category + ",street')" }}
-//                     >
-//                       <img
-//                         className="card-img d-none"
-//                         src={"https://source.unsplash.com/600x900/?" + event.category + ",street"}
-//                         alt={event.name}
-//                       />
-//                       <div className="card-img-overlay d-flex flex-column">
-//                         <div className="card-body">
-//                           <small className="card-meta mb-2">{event.category}</small>
-//                           <h4 className="card-title mt-0">
-//                             <a className="text-light" href="#!">{event.name}</a>
-//                           </h4>
-//                           <small><i className="far fa-clock"></i> {event.date}</small>
-//                           <p className="mt-3">{event.description}</p>
-//                         </div>
-//                         <div className="card-footer">
-//                           <div className="media">
-//                             <div className="media-body">
-//                               <h6 className="my-0 text-light d-block">Created by {username}</h6>
-//                             </div>
-//                           </div>
-//                           <button className="btn btn-secondary mt-2" style={{ backgroundColor: '#30e5ca', color: '#ffffff' }}>Registered</button>
-//                         </div>
+//               <div className="card-img-overlay d-flex flex-column pt-0">
+//                 <div className="card-body">
+//                   {editingEventId === event.id ? (
+//                     <form onSubmit={handleSaveChanges}>
+//                       <div className="form-group">
+//                         <label htmlFor="name">Event Name:</label>
+//                         <input
+//                           type="text"
+//                           id="name"
+//                           name="name"
+//                           value={editEventData.name}
+//                           onChange={handleChange}
+//                           required
+//                           className="form-control"
+//                         />
+//                       </div>
+//                       <div className="form-group">
+//                         <label htmlFor="description">Description:</label>
+//                         <textarea
+//                           id="description"
+//                           name="description"
+//                           value={editEventData.description}
+//                           onChange={handleChange}
+//                           required
+//                           className="form-control"
+//                         ></textarea>
+//                       </div>
+//                       <div className="form-group">
+//                         <label htmlFor="date">Date:</label>
+//                         <input
+//                           type="date"
+//                           id="date"
+//                           name="date"
+//                           value={editEventData.date}
+//                           onChange={handleChange}
+//                           required
+//                           min={new Date().toISOString().split('T')[0]}
+//                           className="form-control"
+//                         />
+//                       </div>
+//                       <div className="form-group">
+//                         <label htmlFor="location">Location:</label>
+//                         <input
+//                           type="text"
+//                           id="location"
+//                           name="location"
+//                           value={editEventData.location}
+//                           onChange={handleChange}
+//                           required
+//                           className="form-control"
+//                         />
+//                       </div>
+//                       <div className="form-group">
+//                         <label htmlFor="category">Category:</label>
+//                         <select
+//                           id="category"
+//                           name="category"
+//                           value={editEventData.category}
+//                           onChange={handleChange}
+//                           required
+//                           className="form-control"
+//                         >
+//                           <option value="" disabled>Select Category</option>
+//                           <option value="alumini">Alumini Meets</option>
+//                           <option value="concert">Concert</option>
+//                           <option value="tech">Tech Seminar</option>
+//                           <option value="get_together">Small Get Together</option>
+//                           <option value="wedding">Wedding</option>
+//                           <option value="other">Other</option>
+//                         </select>
+//                       </div>
+//                       <div className="d-flex justify-content-between">
+//                         <button type="submit" className="btn btn-success">Save Changes</button>
+//                         <button type="button" className="btn btn-secondary" onClick={() => handleCancelEdit(event.id)}>Cancel</button>
+//                       </div>
+//                     </form>
+//                   ) : (
+//                     <div className=''>
+//                       <div style={{ paddingLeft: '3px', fontSize: '20px' }}>
+//                         <h3 className="card-meta">{event.category}</h3>
+//                       </div>
+//                       <div className='d-flex justify-content-center'>
+//                         <img
+//                           src={categoryImages[event.category] || "/default.jpg"} // Use default image if category is not found
+//                           alt='EventImage'
+//                           width="550px"
+//                           height="300px"
+//                         />
+//                       </div>
+//                       <div style={{ paddingTop: '10px', paddingLeft: '3px', fontSize: '20px' }}>
+//                         <h3 style={{ fontSize: '18px', color: 'black', letterSpacing: '5px', fontWeight: 'light', paddingLeft: '3px' }} className='bona-nova-sc-bold'>{event.name}</h3>
+//                       </div>
+//                       <div style={{ paddingLeft: '7px' }}>
+//                         <small><i className="far fa-clock"></i> {event.date}</small>
+//                         <p className="mt-1" style={{ fontStyle: 'italic' }}>{event.description}</p>
 //                       </div>
 //                     </div>
-//                   </div>
-//                 ))
-//               )}
-//             </div>
-//           </div>
-
-//           {/* My Registered Events Section */}
-//           <div className="my-events-section">
-//             <h2>My Registered Events</h2>
-//             <div className="row">
-//               {myRegisteredEvents.length === 0 ? (
-//                 <div className="col-12">
-//                   <p>No Events to show</p>
+//                   )}
 //                 </div>
-//               ) : (
-//                 myRegisteredEvents.map((event, index) => (
-//                   <div key={index} className="col-sm-12 col-md-6 col-lg-4 mb-4 p-2">
-//                     <div
-//                       className="card text-light card-has-bg click-col"
-//                       style={{ backgroundImage: "url('https://source.unsplash.com/600x900/?" + event.category + ",street')" }}
-//                     >
-//                       <img
-//                         className="card-img d-none"
-//                         src={"https://source.unsplash.com/600x900/?" + event.category + ",street"}
-//                         alt={event.name}
-//                       />
-//                       <div className="card-img-overlay d-flex flex-column">
-//                         <div className="card-body">
-//                           <small className="card-meta mb-2">{event.category}</small>
-//                           <h4 className="card-title mt-0">
-//                             <a className="text-light" href="#!">{event.name}</a>
-//                           </h4>
-//                           <small><i className="far fa-clock"></i> {event.date}</small>
-//                           <p className="mt-3">{event.description}</p>
-//                         </div>
-//                         <div className="card-footer">
-//                           <div className="media">
-//                             <div className="media-body">
-//                               <h6 className="my-0 text-light d-block">Event</h6>
-//                             </div>
-//                           </div>
-//                           <button className="btn btn-secondary mt-2" style={{ backgroundColor: '#84ceda', color: '#ffffff' }}>Register for Event</button>
-//                         </div>
-//                       </div>
-//                     </div>
-//                   </div>
-//                 ))
-//               )}
+//                 <div className="card-footer d-flex justify-content-around" style={{ paddingTop: '0px' }}>
+//                   {/* Register for event button */}
+//                   <button onClick={() => handleRegister(event.id)} className="btn btn-secondary" style={{ backgroundColor: 'transparent', color: 'black' }}>Register for Event</button>
+//                   {/* Edit Event button  */}
+//                   <button className="btn btn-secondary" onClick={() => handleEditEventClick(event)} style={{ backgroundColor: 'transparent', color: 'green', width: '12%' }}>
+//                     <i className="bi bi-pencil-square"></i>
+//                   </button>
+//                   {/* Delete Event button  */}
+//                   <button className="btn btn-secondary" style={{ backgroundColor: 'transparent', color: 'red', width: '15%' }}>
+//                     <i className="bi bi-trash"></i>
+//                   </button>
+//                 </div>
+//               </div>
 //             </div>
 //           </div>
+//         ))
+//       )}
+//     </div>
+//   </div>
+// )}
+
+
+
 
 //           {/* All Events Section */}
 //           <div className="my-events-section">
-//             <h2>All Events</h2>
+//           <h2 className='bona-nova-sc-regular' style={{fontSize:'35px', letterSpacing:'3px', color:'gray', font:'lighter', textTransform: 'uppercase', paddingTop:'100px'}}>All Events</h2>
 //             <div className="row">
 //               {allEvents.length === 0 ? (
 //                 <div className="col-12">
@@ -465,32 +910,40 @@ export const Card = () => {
 //                 </div>
 //               ) : (
 //                 allEvents.map((event, index) => (
-//                   <div key={index} className="col-sm-12 col-md-6 col-lg-4 mb-4 p-2">
+//                   <div key={index} className="col-sm-12 col-md-6 col-lg-6 mb-4 p-2">
 //                     <div
-//                       className="card text-light card-has-bg click-col"
-//                       style={{ backgroundImage: "url('https://source.unsplash.com/600x900/?" + event.category + ",street')" }}
+//                       className="card text-dark card-has-bg click-col"
+//                       style={{ backgroundImage: "url('https://source.unsplash.com/600x900/?" + event.category + ",street')"}}
 //                     >
-//                       <img
-//                         className="card-img d-none"
-//                         src={"https://source.unsplash.com/600x900/?" + event.category + ",street"}
-//                         alt={event.name}
-//                       />
-//                       <div className="card-img-overlay d-flex flex-column">
+//                       <div className="card-img-overlay d-flex flex-column pt-0">
 //                         <div className="card-body">
-//                           <small className="card-meta mb-2">{event.category}</small>
-//                           <h4 className="card-title mt-0">
-//                             <a className="text-light" href="#!">{event.name}</a>
-//                           </h4>
-//                           <small><i className="far fa-clock"></i> {event.date}</small>
-//                           <p className="mt-3">{event.description}</p>
-//                         </div>
-//                         <div className="card-footer">
-//                           <div className="media">
-//                             <div className="media-body">
-//                               <h6 className="my-0 text-light d-block">Event</h6>
+//                           <div className=''>
+//                             <div style={{paddingLeft:'3px', fontSize:'20px'}}>
+//                               <h3 className="card-meta">{event.category}</h3>
+//                             </div>
+//                             <div className='d-flex justify-content-center' >
+//                               <img
+//                                 src={categoryImages[event.category] || "/default.jpg"} // Use default image if category is not found
+//                                 alt='EventImage'
+//                                 width="550px"
+//                                 height="300px"
+//                               />
+//                             </div>
+//                             <div style={{paddingTop:'10px' ,paddingLeft:'3px', fontSize:'20px' }}>
+//                               <h3 style={{fontSize: '18px', color:'black', letterSpacing:'5px', fontWeight:'light', paddingLeft:'3px'}} className='bona-nova-sc-bold'>{event.name}</h3>
+//                             </div>
+//                             <div style={{paddingLeft:'7px'}}>
+//                               <small><i className="far fa-clock"></i> {event.date}</small>
+//                               <p className="mt-1" style={{fontStyle:'italic'}}>{event.description}</p>
 //                             </div>
 //                           </div>
-//                           <button className="btn btn-secondary mt-2" style={{ backgroundColor: '#84ceda', color: '#ffffff' }}>Register for Event</button>
+//                         </div>
+//                         <div className="card-footer d-flex justify-content-around" style={{paddingTop:'0px'}}>
+//                           {/* Register for event button */}
+//                           <button onClick={() => handleRegister(event.id)} className="btn btn-secondary " style={{ backgroundColor: 'transparent', color: 'green' }}>Register for Event</button>
+
+//                           {/*Show Event Button*/}
+
 //                         </div>
 //                       </div>
 //                     </div>
@@ -499,50 +952,9 @@ export const Card = () => {
 //               )}
 //             </div>
 //           </div>
-
-//           {/* Existing Dummy Events Section */}
-//           <div className="my-events-section">
-//             <h2>Dummy Events</h2>
-//             <div className="row">
-//               {dummyEvents.map((event, index) => (
-//                 <div key={index} className="col-sm-12 col-md-6 col-lg-4 mb-4 p-2">
-//                   <div
-//                     className="card text-light card-has-bg click-col"
-//                     style={{ backgroundImage: "url('https://source.unsplash.com/600x900/?" + event.category + ",street')" }}
-//                   >
-//                     <img
-//                       className="card-img d-none"
-//                       src={"https://source.unsplash.com/600x900/?" + event.category + ",street"}
-//                       alt={event.name}
-//                     />
-//                     <div className="card-img-overlay d-flex flex-column">
-//                       <div className="card-body">
-//                         <small className="card-meta mb-2">{event.category}</small>
-//                         <h4 className="card-title mt-0">
-//                           <a className="text-light" href="#!">{event.name}</a>
-//                         </h4>
-//                         <small><i className="far fa-clock"></i> {event.date}</small>
-//                         <p className="mt-3">{event.description}</p>
-//                       </div>
-//                       <div className="card-footer">
-//                         <div className="media">
-//                           <div className="media-body">
-//                             <h6 className="my-0 text-light d-block">Event</h6>
-//                           </div>
-//                         </div>
-//                         <button className="btn btn-secondary mt-2" style={{ backgroundColor: '#84ceda', color: '#ffffff' }}>Register for Event</button>
-//                       </div>
-//                     </div>
-//                   </div>
-//                 </div>
-//               ))}
-//             </div>
-//           </div>
-
-
 //         </div>
 //       </div>
 //       <Modal showModal={showModal} setShowModal={setShowModal} userId={user.userId} />
-//     </section>
+//     </section></div>
 //   );
 // };
