@@ -19,7 +19,7 @@ export const EditEvent = ({ showEditModal, setShowEditModal, eventId }) => {
 
   const fetchEventDetails = async (id) => {
     try {
-      const response = await fetch(`http://localhost:8080/api/events/${id}`);
+      const response = await fetch(`thakur-and-sons-backend-production.up.railway.app/api/events/${id}`);
       if (response.ok) {
         const event = await response.json();
         setEventData(event);
@@ -42,7 +42,7 @@ export const EditEvent = ({ showEditModal, setShowEditModal, eventId }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch(`http://localhost:8080/api/events/${eventId}`, {
+      const response = await fetch(`thakur-and-sons-backend-production.up.railway.app/api/events/${eventId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'

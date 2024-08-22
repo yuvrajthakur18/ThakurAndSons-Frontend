@@ -43,7 +43,7 @@ export const Card = () => {
 
   const fetchUserInfo = async (username) => {
     try {
-      const response = await fetch(`http://localhost:8080/api/auth/user/${username}`);
+      const response = await fetch(`thakur-and-sons-backend-production.up.railway.app/api/auth/user/${username}`);
       if (response.ok) {
         const user = await response.json();
         setUser(user);
@@ -57,7 +57,7 @@ export const Card = () => {
 
   const fetchAllEvents = async () => {
     try {
-      const response = await fetch('http://localhost:8080/api/events/all');
+      const response = await fetch('thakur-and-sons-backend-production.up.railway.app/api/events/all');
       if (response.ok) {
         const events = await response.json();
         setAllEvents(events);
@@ -71,7 +71,7 @@ export const Card = () => {
 
   const fetchUserEvents = async () => {
     try {
-      const response = await fetch(`http://localhost:8080/api/events/user/${localStorage.getItem('userId')}`);
+      const response = await fetch(`thakur-and-sons-backend-production.up.railway.app/api/events/user/${localStorage.getItem('userId')}`);
       if (response.ok) {
         const createdEvents = await response.json();
         setMyCreatedEvents(createdEvents);
@@ -85,7 +85,7 @@ export const Card = () => {
 
   const fetchUserRegisteredEvents = async () => {
     try {
-      const response = await fetch(`http://localhost:8080/api/events/user/${localStorage.getItem('userId')}/registered-events`);
+      const response = await fetch(`thakur-and-sons-backend-production.up.railway.app/api/events/user/${localStorage.getItem('userId')}/registered-events`);
       if (response.ok) {
         const registeredEvents = await response.json();
         setMyRegisteredEvents(registeredEvents);
@@ -124,7 +124,7 @@ export const Card = () => {
   const handleSaveChanges = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch(`http://localhost:8080/api/events/${editingEventId}`, {
+      const response = await fetch(`thakur-and-sons-backend-production.up.railway.app/api/events/${editingEventId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -158,7 +158,7 @@ export const Card = () => {
 
   const handleDelete = (eventId) => {
     // Send a DELETE request to the backend
-    fetch(`http://localhost:8080/api/events/${eventId}`, {
+    fetch(`thakur-and-sons-backend-production.up.railway.app/api/events/${eventId}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
@@ -191,7 +191,7 @@ export const Card = () => {
     const userId = localStorage.getItem('userId'); // Retrieve user ID
   
     try {
-      const response = await fetch(`http://localhost:8080/api/events/register/${userId}/${localStorage.getItem('eventId')}`, {
+      const response = await fetch(`thakur-and-sons-backend-production.up.railway.app/api/events/register/${userId}/${localStorage.getItem('eventId')}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

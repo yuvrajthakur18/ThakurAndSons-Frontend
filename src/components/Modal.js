@@ -27,7 +27,7 @@ export const Modal = ({ showModal, setShowModal, userId }) => {
     // alert("Enter "+localStorage.getItem('userId'))
     try {
     //   const { userId, ...eventDataWithoutUserId } = eventData;
-      const response = await fetch(`http://localhost:8080/api/events/${localStorage.getItem('userId')}`, {
+      const response = await fetch(`thakur-and-sons-backend-production.up.railway.app/api/events/${localStorage.getItem('userId')}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
