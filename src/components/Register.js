@@ -122,7 +122,7 @@ export const Register = () => {
     }
 
     try {
-      const response = await fetch('thakur-and-sons-backend-production.up.railway.app/api/auth/register', {
+      const response = await fetch('https://thakur-and-sons-backend-production.up.railway.app/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

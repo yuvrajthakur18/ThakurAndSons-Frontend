@@ -25,14 +25,15 @@ export const Login = () => {
     e.preventDefault();
 
     try {
-      const response = await fetch('thakur-and-sons-backend-production.up.railway.app/api/auth/login', {
+      const response = await fetch('https://thakur-and-sons-backend-production.up.railway.app/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(formData),
       });
-
+  
+      
       const isJson = response.headers.get('content-type')?.includes('application/json');
       const data = isJson ? await response.json() : null;
 
