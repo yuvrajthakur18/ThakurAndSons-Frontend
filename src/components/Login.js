@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { apiFetch } from '../config/apiConfig';
 
 export const Login = () => {
   const [formData, setFormData] = useState({
@@ -25,11 +26,11 @@ export const Login = () => {
     e.preventDefault();
 
     try {
-      const response = await fetch('https://thakur-and-sons-backend-production.up.railway.app/api/auth/login', {
+      const response = await apiFetch('api/auth/login', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        // headers: {
+        //   'Content-Type': 'application/json',
+        // },
         body: JSON.stringify(formData),
       });
   
