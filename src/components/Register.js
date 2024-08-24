@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
+const BASE_URL = process.env.REACT_APP_BASE_URL;
+
 export const Register = () => {
   const [formData, setFormData] = useState({
     username: '',
@@ -122,7 +124,7 @@ export const Register = () => {
     }
 
     try {
-      const response = await fetch('https://thakur-and-sons-backend-production.up.railway.app/api/auth/register', {
+      const response = await fetch(`${BASE_URL}/api/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

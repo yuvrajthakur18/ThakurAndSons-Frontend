@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import './Modal.css';
 
+const BASE_URL = process.env.REACT_APP_BASE_URL;
+
 export const EditEvent = ({ showEditModal, setShowEditModal, eventId }) => {
   const [eventData, setEventData] = useState({
     name: '',
@@ -19,7 +21,7 @@ export const EditEvent = ({ showEditModal, setShowEditModal, eventId }) => {
 
   const fetchEventDetails = async (id) => {
     try {
-      const response = await fetch(`https://thakur-and-sons-backend-production.up.railway.app/api/events/${id}`);
+      const response = await fetch(`${BASE_URL}/api/events/${id}`);
       if (response.ok) {
         const event = await response.json();
         setEventData(event);
@@ -42,7 +44,7 @@ export const EditEvent = ({ showEditModal, setShowEditModal, eventId }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch(`https://thakur-and-sons-backend-production.up.railway.app/api/events/${eventId}`, {
+      const response = await fetch(`${BASE_URL}/api/events/${eventId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'

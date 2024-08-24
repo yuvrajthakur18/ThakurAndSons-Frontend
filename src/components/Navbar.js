@@ -5,6 +5,8 @@ import { Link as ScrollLink } from 'react-scroll';
 import '../index.css'
 import { Card } from './Card';
 
+const BASE_URL = process.env.REACT_APP_BASE_URL;
+
 export const Navbar = () => {
   const [username, setUsername] = useState('');
   const navigate = useNavigate();
@@ -18,7 +20,7 @@ export const Navbar = () => {
 
   const handleLogout = async () => {
     try {
-      const response = await fetch('https://thakur-and-sons-backend-production.up.railway.app/api/auth/logout', {
+      const response = await fetch(`${BASE_URL}/api/auth/logout`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`

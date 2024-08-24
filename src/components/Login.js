@@ -3,6 +3,8 @@ import { Link, useLocation } from 'react-router-dom';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
+const BASE_URL = process.env.REACT_APP_BASE_URL;
+
 export const Login = () => {
   const [formData, setFormData] = useState({
     username: '',
@@ -25,7 +27,7 @@ export const Login = () => {
     e.preventDefault();
 
     try {
-      const response = await fetch('https://thakur-and-sons-backend-production.up.railway.app/api/auth/login', {
+      const response = await fetch(`${BASE_URL}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -54,7 +56,7 @@ export const Login = () => {
         }
       } else {
         const errorMessage = data ? data.message : 'Login failed!';
-        toast.error(errorMessage);
+        toast.error('Invalid Credentials : ',errorMessage);
         console.error('Login failed:', data);
       }
     } catch (error) {
