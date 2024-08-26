@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import './Card.css';
 import { Modal } from './Modal';
 import 'bootstrap-icons/font/bootstrap-icons.css';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const BASE_URL = process.env.REACT_APP_BASE_URL;
 
@@ -19,7 +21,8 @@ export const Card = () => {
     description: '',
     date: '',
     location: '',
-    category: ''
+    category: '',
+    imageUrl:''
   });
 
   useEffect(() => {
@@ -111,7 +114,8 @@ export const Card = () => {
       description: event.description,
       date: event.date,
       location: event.location,
-      category: event.category
+      category: event.category,
+      imageUrl: event.imageUrl
     });
   };
 
@@ -134,6 +138,10 @@ export const Card = () => {
         body: JSON.stringify(editEventData)
       });
       if (response.ok) {
+        toast.success("Event Updated Succesfully!")
+        setTimeout(() => {
+          window.location.href = '/events';
+        }, 1000); // Delay to allow toast to display before redirecting
         const updatedEvent = await response.json();
         setMyCreatedEvents((prevEvents) =>
           prevEvents.map((event) => (event.id === editingEventId ? updatedEvent : event))
@@ -141,9 +149,17 @@ export const Card = () => {
         setEditingEventId(null);
       } else {
         console.error('Failed to update event');
+        toast.error("Failed to update event!")
+        setTimeout(() => {
+          window.location.href = '/events';
+        }, 1000); // Delay to allow toast to display before redirecting
       }
     } catch (error) {
       console.error('Error:', error);
+      toast.error("Failed!")
+      setTimeout(() => {
+        window.location.href = '/events';
+      }, 1000); // Delay to allow toast to display before redirecting
     }
   };
 
@@ -154,7 +170,8 @@ export const Card = () => {
       description: '',
       date: '',
       location: '',
-      category: ''
+      category: '',
+      imageUrl: ''
     });
   };  
 
@@ -168,14 +185,27 @@ export const Card = () => {
     })
     .then(response => {
       if (response.ok) {
+        toast.success("Event Deleted Successfully!");
+        setTimeout(() => {
+          window.location.href = '/events';
+        }, 1000); // Delay to allow toast to display before redirecting
         // Remove the deleted event from the state
         setMyCreatedEvents(prevEvents => prevEvents.filter(event => event.id !== eventId));
+        
       } else {
         console.error('Failed to delete the event.');
+        toast.error("Failed to delete the event!");
+        setTimeout(() => {
+          window.location.href = '/events';
+        }, 1000); // Delay to allow toast to display before redirecting
       }
     })
     .catch(error => {
       console.error('Error:', error);
+      toast.error("Failed!");
+      setTimeout(() => {
+        window.location.href = '/events';
+      }, 1000); // Delay to allow toast to display before redirecting
     });
   };
   
@@ -193,7 +223,7 @@ export const Card = () => {
     const userId = localStorage.getItem('userId'); // Retrieve user ID
   
     try {
-      const response = await fetch(`${BASE_URL}/api/events/register/${userId}/${localStorage.getItem('eventId')}`, {
+      const response = await fetch(`${BASE_URL}/api/events/register/${userId}/${eventId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -203,21 +233,29 @@ export const Card = () => {
         //   eventId
         // }),
       });
-
-      if (!response.ok) {
+      
+      if (response.ok) {
+        toast.success('Successfully registered for the event!');
+        console.log("Registered for Event");
+        setTimeout(() => {
+          window.location.href = '/events';
+        }, 1500); // Delay to allow toast to display before redirecting
+      }
+      else {
         throw new Error('Network response was not ok');
       }
-
-      alert('Successfully registered for the event!');
     } catch (error) {
       console.error('Error registering for event:', error);
-      alert('Failed to register for the event.');
+      toast.error('Login to Register!');
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 1000); // Delay to allow toast to display before redirecting
     }
   };
-  
 
   return (
   <div style={{backgroundColor:'white', padding:'10px 0', marginTop:'-30px'}}>
+    <ToastContainer />
     <section className="wrapper">
       <div className="container">
         {/* User Info Header */}
@@ -336,7 +374,7 @@ export const Card = () => {
                                 </div>
                                 <div className='d-flex justify-content-center'>
                                   <img
-                                    src={categoryImages[event.category] || "/default.jpg"} // Use default image if category is not found
+                                    src={event.imageUrl || "/default.jpg"} // Use Cloudinary image, category image, or default image
                                     alt='EventImage'
                                     width="575px"
                                     height="300px"
@@ -351,11 +389,12 @@ export const Card = () => {
                                   <p className="mt-1" style={{ fontStyle: 'italic' }}>{event.description}</p>
                                 </div>
                               </div>
+
                             )}
                           </div>
                           <div className="card-footer d-flex justify-content-around" style={{ paddingTop: '0px' }}>
                             {/* Register for event button */}
-                            <button onClick={() => handleRegister(event.id)} className="btn btn-secondary" style={{ backgroundColor: 'transparent', color: 'black' }}>Register for Event</button>
+                            <button onClick={() => handleRegister(event.id)} className="btn btn-secondary" style={{ backgroundColor: 'transparent', color: '#1F316F' }}>Register for Event</button>
                             {/* Edit Event button  */}
                             <button className="btn btn-secondary" onClick={() => handleEditEventClick(event)} style={{ backgroundColor: 'transparent', color: 'green', width: '12%' }}>
                               <i className="bi bi-pencil-square"></i>
@@ -475,7 +514,7 @@ export const Card = () => {
                                 </div>
                                 <div className='d-flex justify-content-center'>
                                   <img
-                                    src={categoryImages[event.category] || "/default.jpg"} // Use default image if category is not found
+                                    src={event.imageUrl || categoryImages[event.category] || "/default.jpg"} // Use default image if category is not found
                                     alt='EventImage'
                                     width="575px"
                                     height="300px"
@@ -494,7 +533,7 @@ export const Card = () => {
                           </div>
                           <div className="card-footer d-flex justify-content-around" style={{ paddingTop: '0px' }}>
                             {/* Registered for event button */}
-                            <button className="btn btn-secondary" style={{ backgroundColor: 'transparent', color: 'black' }}>Registered</button>
+                            <button className="btn btn-secondary" style={{ backgroundColor: 'transparent', color: 'green' }}>Registered</button>
                           </div>
                         </div>
                       </div>
@@ -528,7 +567,7 @@ export const Card = () => {
                             </div>
                             <div className='d-flex justify-content-center' >
                               <img
-                                src={categoryImages[event.category] || "/default.jpg"} // Use default image if category is not found
+                                src={event.imageUrl || categoryImages[event.category] || "/default.jpg"} // Use default image if category is not found
                                 alt='EventImage'
                                 width="575px"
                                 height="300px"
@@ -544,10 +583,10 @@ export const Card = () => {
                             </div>
                           </div>
                         </div>
-                        <div className="card-footer d-flex justify-content-around" style={{paddingTop:'0px'}}>
+                        <div className="card-footer d-flex justify-content-center" style={{paddingTop:'0px'}}>
                           {/* Register for event button */}
-                          <button onClick={() => handleRegister(event.id)} className="btn btn-secondary " style={{ backgroundColor: 'transparent', color: 'green' }}>Register for Event</button>
-
+                          <button onClick={() => handleRegister(event.id)} className="btn btn-secondary " style={{ backgroundColor: 'transparent', color: '#1F316F' }}>Register for Event</button>
+                          <ToastContainer />
                           {/*Show Event Button*/}
 
                         </div>

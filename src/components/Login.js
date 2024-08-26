@@ -56,7 +56,7 @@ export const Login = () => {
         }
       } else {
         const errorMessage = data ? data.message : 'Login failed!';
-        toast.error('Invalid Credentials : ',errorMessage);
+        toast.error('Invalid Credentials',errorMessage);
         console.error('Login failed:', data);
       }
     } catch (error) {
