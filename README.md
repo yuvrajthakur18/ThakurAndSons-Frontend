@@ -1,3 +1,9 @@
+An Event-mgmt-website built using React.js and Spring-boot.
+Integrated Cloudinary for storing images and videos on cloud.
+Deployed on Vercel.app and Railway.app
+
+
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
