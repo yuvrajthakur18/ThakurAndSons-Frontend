@@ -27,7 +27,7 @@ export const Login = () => {
     e.preventDefault();
 
     try {
-      const response = await fetch("https://thakur-and-sons-backend-production.up.railway.app/api/auth/login", {
+      const response = await fetch(`${BASE_URL}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

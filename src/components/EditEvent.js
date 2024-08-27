@@ -24,10 +24,14 @@ export const EditEvent = ({ showEditModal, setShowEditModal, eventId }) => {
   const editorRef = useRef(); // Ref to store the CKEditor instance
 
   // Function to strip HTML tags
-  const stripHtmlTags = (html) => {
-    const tempElement = document.createElement('div');
-    tempElement.innerHTML = html;
-    return tempElement.textContent || tempElement.innerText || '';
+  // const stripHtmlTags = (html) => {
+  //   const tempElement = document.createElement('div');
+  //   tempElement.innerHTML = html;
+  //   return tempElement.textContent || tempElement.innerText || '';
+  // };
+
+  const renderHTML = (htmlString) => {
+    return { __html: htmlString };
   };
 
   const fetchEventDetails = async (id) => {
@@ -52,19 +56,13 @@ export const EditEvent = ({ showEditModal, setShowEditModal, eventId }) => {
   //   });
   // };
 
-  //Memoize the handleChange function to avoid creating it on every render
+  // Memoize the handleChange function to avoid creating it on every render
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
-    setEventData((prevData) => {
-      const strippedValue = stripHtmlTags(value);
-      if (prevData[name] === strippedValue) {
-        return prevData; // Prevent unnecessary state update if value hasn't changed
-      }
-      return {
-        ...prevData,
-        [name]: strippedValue,
-      };
-    });
+    setEventData((prevData) => ({
+      ...prevData,
+      [name]: value,  // Store raw HTML content here
+    }));
   }, []);
 
   const handleSubmit = async (e) => {
@@ -97,37 +95,6 @@ export const EditEvent = ({ showEditModal, setShowEditModal, eventId }) => {
       console.error('Error:', error);
     }
   };
-
-  const [file, setFile] = useState(null);
-  const [imageUrl, setImageUrl] = useState("");
-
-  const handleFileChange = (e) => {
-      setFile(e.target.files[0]);
-  };
-
-  const handleUpload = async () => {
-    const formData = new FormData();
-    formData.append('file', file);
-
-    try {
-        const response = await fetch(`${BASE_URL}/api/upload`, {
-            method: 'POST',
-            body: formData,
-            headers: {
-                // 'Content-Type' should not be set explicitly for FormData when using fetch
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error('Image upload failed');
-        }
-
-        const data = await response.json();
-        setImageUrl(data);
-    } catch (error) {
-        console.error('Image upload failed:', error);
-    }
-};
 
   return (
     <div className={`modal ${showEditModal ? 'show' : 'hide'}`} onClick={() => setShowEditModal(false)}>
