@@ -45,6 +45,9 @@ export const Card = () => {
     }
   }, [userId]);
   
+  const renderHTML = (htmlString) => {
+    return { __html: htmlString };
+  };
 
   const fetchUserInfo = async (username) => {
     try {
@@ -386,7 +389,8 @@ export const Card = () => {
                                 </div>
                                 <div style={{ paddingLeft: '7px' }}>
                                   <small><i className="far fa-clock"></i> {event.date}</small>
-                                  <p className="mt-1" style={{ fontStyle: 'italic' }}>{event.description}</p>
+                                  {/* <p className="mt-1" style={{ fontStyle: 'italic' }}>{event.description}</p> */}
+                                  <p className="mt-1" dangerouslySetInnerHTML={renderHTML(event.description)}></p>
                                 </div>
                               </div>
 
